@@ -1,0 +1,14 @@
+# Build and Release Folders
+bin/
+obj/
+TestResults/
+*.log
+
+# Personal/IDE settings
+.idea/
+.vscode/
+*.user
+*.userprefs
+*.suo
+*.pidb
+.vs/

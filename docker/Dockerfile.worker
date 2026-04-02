@@ -1,0 +1,28 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+COPY PayFlow.sln .
+COPY src/PayFlow.Domain/PayFlow.Domain.csproj src/PayFlow.Domain/
+COPY src/PayFlow.Application/PayFlow.Application.csproj src/PayFlow.Application/
+COPY src/PayFlow.Infrastructure/PayFlow.Infrastructure.csproj src/PayFlow.Infrastructure/
+COPY src/PayFlow.Worker/PayFlow.Worker.csproj src/PayFlow.Worker/
+
+RUN dotnet restore src/PayFlow.Worker/PayFlow.Worker.csproj
+
+COPY src/ src/
+RUN dotnet publish src/PayFlow.Worker/PayFlow.Worker.csproj \
+    -c Release \
+    -o /app/publish \
+    --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+
+RUN adduser --disabled-password --gecos "" appuser
+USER appuser
+
+COPY --from=build /app/publish .
+
+ENV DOTNET_ENVIRONMENT=Production
+
+ENTRYPOINT ["dotnet", "PayFlow.Worker.dll"]

@@ -1,0 +1,85 @@
+services:
+  payflow-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - sqlserver
+      - rabbitmq
+      - redis
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__PayFlow=Server=sqlserver,1433;Database=PayFlow;User Id=sa;Password=PayFlow@Dev123;TrustServerCertificate=True;
+      - ConnectionStrings__Redis=redis:6379
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__Port=5672
+      - RabbitMq__UserName=guest
+      - RabbitMq__Password=guest
+      - Jwt__SecretKey=PayFlow-Dev-SecretKey-At-Least-32-Characters-Long!!
+    networks:
+      - payflow-network
+    restart: on-failure:5
+
+  payflow-worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    depends_on:
+      - sqlserver
+      - rabbitmq
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      - ConnectionStrings__PayFlow=Server=sqlserver,1433;Database=PayFlow;User Id=sa;Password=PayFlow@Dev123;TrustServerCertificate=True;
+      - RabbitMq__Host=rabbitmq
+      - RabbitMq__Port=5672
+      - RabbitMq__UserName=guest
+      - RabbitMq__Password=guest
+    networks:
+      - payflow-network
+    restart: on-failure:5
+
+  sqlserver:
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    platform: linux/arm64
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "PayFlow@Dev123"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    networks:
+      - payflow-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    networks:
+      - payflow-network
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - payflow-network
+
+networks:
+  payflow-network:
+    driver: bridge
+
+volumes:
+  sqldata:
+  rabbitmqdata:
+  redisdata:
