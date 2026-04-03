@@ -1,5 +1,7 @@
 # PayFlow 💸
 
+![PayFlow Cover](cover.png)
+
 PayFlow is a robust backend engine for a digital wallet and payment processing system. It is built using modern **Fintech engineering principles** to ensure high availability, strong consistency, and zero loss of funds, acting much like the core processing layer of systems like Venmo or PayPal.
 
 ## 🚀 Key Features
